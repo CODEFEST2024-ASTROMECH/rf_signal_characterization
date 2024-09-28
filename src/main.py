@@ -63,6 +63,9 @@ class RFSpectrumApp(QWidget):
         # Procesar segunda parte (datos de frecuencia y magnitud)
         self.data_instant = self.process_rf_given_time(parts[1])
         self.plot_frequency_magnitude(self.data_instant)
+
+        # Guardar el DataFrame en un archivo CSV
+        self.data_instant.to_csv('resources/processed_data.csv', index=False)
         
         # Procesar tercera parte (espectrograma)
             
