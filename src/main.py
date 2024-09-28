@@ -65,10 +65,9 @@ class RFSpectrumApp(QWidget):
         self.plot_frequency_magnitude(self.data_instant)
 
         # Guardar el DataFrame en un archivo CSV
-        self.data_instant.to_csv('resources/processed_data.csv', index=False)
-        
         # Procesar tercera parte (espectrograma)
-            
+        self.spectogram = self.process_spectrogram(parts[2])
+
     def process_metadata(self, text):
         """
         Procesa la primera parte del archivo CSV y almacena la información en un diccionario.
@@ -138,6 +137,52 @@ class RFSpectrumApp(QWidget):
         
         # Mostrar la gráfica
         plt.show()
+
+    def process_spectrogram(self, text):
+        """
+        Procesa la tercera parte del archivo CSV, despreciando las primeras tres filas y
+        devolviendo un DataFrame con la frecuencia como la primera columna y las magnitudes en las siguientes columnas.
+        
+        Args:
+            text (str): El texto correspondiente a la tercera parte del archivo CSV.
+            
+        Returns:
+            DataFrame: Un DataFrame con la columna "Frecuencia [Hz]" y columnas de magnitudes numeradas.
+        """
+        # Omitir las primeras tres filas y leer el resto
+        data = pd.read_csv(StringIO(text), sep=';', header=None, skiprows=3)
+        
+        # Renombrar las columnas
+        column_names = ['Frecuencia [Hz]'] + [str(i) for i in range(data.shape[1] - 1)]
+        data.columns = column_names
+        
+        # Asegurarse de que la columna de frecuencia se convierta a float
+        data['Frecuencia [Hz]'] = pd.to_numeric(data['Frecuencia [Hz]'], errors='coerce')
+        
+        return data
+
+    def filter_dataframe_by_index(df, index):
+        """
+        Filtra el DataFrame para devolver solo la columna de frecuencia y la columna especificada por el índice.
+        
+        Args:
+            df (DataFrame): El DataFrame original que contiene las columnas.
+            index (int): El índice de la columna a filtrar.
+            
+        Returns:
+            DataFrame: Un nuevo DataFrame con dos columnas: "Frecuencia [Hz]" y el valor correspondiente del índice.
+        """
+        if index < 0 or index >= df.shape[1] - 1:
+            raise ValueError(f"Índice fuera de rango. Debe estar entre 0 y {df.shape[1] - 2}.")
+
+        # Crear un nuevo DataFrame con las columnas deseadas
+        filtered_df = df.iloc[:, [0, index + 1]]  # index + 1 porque la primera columna es "Frecuencia [Hz]"
+
+        # Renombrar las columnas
+        filtered_df.columns = ['Frecuencia [Hz]', f'Columna {index}']
+
+        return filtered_df
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
